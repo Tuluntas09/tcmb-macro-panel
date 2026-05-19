@@ -1,6 +1,8 @@
 import streamlit as st
-from data_processor import get_series, get_cpi_pct, latest_value, latest_date
-from charts import line_chart
+import pandas as pd
+from data_processor import get_series, get_cpi_pct, filter_by_range, compute_delta, latest_date
+from charts import area_chart, bar_chart, COLORS
+from config import DATE_RANGES
 
 st.set_page_config(
     page_title="TCMB Makro Panel",
@@ -8,66 +10,110 @@ st.set_page_config(
     layout="wide",
 )
 
-st.markdown("""
-    <style>
-    .stApp { background-color: #1D1D2E; color: #F1FAEE; }
-    .metric-card { background: #2E2E42; border-radius: 10px; padding: 16px; text-align: center; }
-    .metric-label { font-size: 13px; color: #A8DADC; margin-bottom: 4px; }
-    .metric-value { font-size: 28px; font-weight: bold; color: #F1FAEE; }
-    .metric-date { font-size: 11px; color: #888; margin-top: 4px; }
-    </style>
+st.markdown(f"""
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap');
+html, body, .stApp {{ background-color: {COLORS['bg']}; color: {COLORS['text']}; font-family: 'Inter', sans-serif; }}
+.metric-card {{
+    background: {COLORS['grid']};
+    border-radius: 12px;
+    padding: 18px 16px;
+    text-align: center;
+    border: 1px solid #3a3a52;
+}}
+.metric-label {{ font-size: 12px; color: {COLORS['muted']}; letter-spacing: .5px; text-transform: uppercase; margin-bottom: 6px; }}
+.metric-value {{ font-size: 26px; font-weight: 700; color: {COLORS['text']}; }}
+.metric-delta-up   {{ font-size: 12px; color: #2A9D8F; margin-top: 4px; }}
+.metric-delta-down {{ font-size: 12px; color: {COLORS['red']}; margin-top: 4px; }}
+.metric-date {{ font-size: 10px; color: {COLORS['muted']}; margin-top: 2px; }}
+div[data-testid="stTabs"] button {{ color: {COLORS['muted']}; }}
+div[data-testid="stTabs"] button[aria-selected="true"] {{ color: {COLORS['text']}; font-weight: 600; }}
+footer {{ visibility: hidden; }}
+</style>
 """, unsafe_allow_html=True)
 
-st.title("📊 TCMB Makro Göstergeler Paneli")
-st.caption("Türkiye Cumhuriyet Merkez Bankası · EVDS verileri · Saatlik güncelleme")
+# ── Başlık + tarih filtresi ──────────────────────────────────────────────────
+col_title, col_filter = st.columns([3, 1])
+with col_title:
+    st.markdown("## 📊 TCMB Makro Göstergeler Paneli")
+    st.caption("Türkiye Cumhuriyet Merkez Bankası · EVDS · Saatlik önbellekleme")
+with col_filter:
+    st.markdown("<div style='padding-top:16px'></div>", unsafe_allow_html=True)
+    range_label = st.radio("Dönem", list(DATE_RANGES.keys()), index=1, horizontal=True)
 
+start_date = DATE_RANGES[range_label]
+
+# ── Veri yükleme ─────────────────────────────────────────────────────────────
 with st.spinner("Veriler yükleniyor..."):
-    usd = get_series("usd_try")
-    eur = get_series("eur_try")
-    rate = get_series("policy_rate")
-    cpi_yillik = get_cpi_pct(period=12)
-    cpi_aylik = get_cpi_pct(period=1)
+    try:
+        usd      = filter_by_range(get_series("usd_try"), start_date)
+        eur      = filter_by_range(get_series("eur_try"), start_date)
+        rate     = filter_by_range(get_series("policy_rate"), start_date)
+        reserves = filter_by_range(get_series("gross_reserves"), start_date)
+        cpi_y    = filter_by_range(get_cpi_pct(12), start_date)
+        cpi_m    = filter_by_range(get_cpi_pct(1), start_date)
+    except ConnectionError as e:
+        st.error(f"Veri yüklenirken hata oluştu: {e}")
+        st.stop()
 
-# Özet metrik kartları
-col1, col2, col3, col4, col5 = st.columns(5)
-
-metrics = [
-    (col1, "USD/TRY", usd, "₺"),
-    (col2, "EUR/TRY", eur, "₺"),
-    (col3, "Politika Faizi", rate, "%"),
-    (col4, "TÜFE Yıllık", cpi_yillik, "%"),
-    (col5, "TÜFE Aylık", cpi_aylik, "%"),
-]
-
-for col, label, df, unit in metrics:
-    val = latest_value(df)
+# ── Metrik kartları ──────────────────────────────────────────────────────────
+def metric_card(col, label: str, df: pd.DataFrame, unit: str, invert: bool = False):
+    val, delta = compute_delta(df)
     date = latest_date(df)
+    if delta > 0:
+        delta_class = "metric-delta-down" if invert else "metric-delta-up"
+        arrow = "▲"
+    else:
+        delta_class = "metric-delta-up" if invert else "metric-delta-down"
+        arrow = "▼"
     col.markdown(f"""
         <div class="metric-card">
             <div class="metric-label">{label}</div>
             <div class="metric-value">{val:.2f} {unit}</div>
+            <div class="{delta_class}">{arrow} {abs(delta):.2f} {unit}</div>
             <div class="metric-date">{date}</div>
         </div>
     """, unsafe_allow_html=True)
 
-st.markdown("---")
+c1, c2, c3, c4, c5 = st.columns(5)
+metric_card(c1, "USD / TRY", usd, "₺", invert=True)
+metric_card(c2, "EUR / TRY", eur, "₺", invert=True)
+metric_card(c3, "Politika Faizi", rate, "%", invert=True)
+metric_card(c4, "TÜFE Yıllık", cpi_y, "%", invert=True)
+metric_card(c5, "Brüt Rezerv", reserves, "mn$")
 
-# Grafikler
-tab1, tab2, tab3 = st.tabs(["💱 Döviz Kurları", "📈 Faiz", "🛒 Enflasyon"])
+st.markdown("<div style='margin-top:24px'></div>", unsafe_allow_html=True)
+
+# ── Sekmeler ─────────────────────────────────────────────────────────────────
+tab1, tab2, tab3, tab4 = st.tabs(["💱 Döviz Kurları", "📈 Faiz", "🛒 Enflasyon", "🏦 Rezervler"])
 
 with tab1:
     c1, c2 = st.columns(2)
     with c1:
-        st.plotly_chart(line_chart(usd, "USD/TRY", "₺", "#E63946"), use_container_width=True)
+        st.plotly_chart(area_chart(usd, "USD / TRY", "₺", COLORS["red"]), use_container_width=True)
     with c2:
-        st.plotly_chart(line_chart(eur, "EUR/TRY", "₺", "#457B9D"), use_container_width=True)
+        st.plotly_chart(area_chart(eur, "EUR / TRY", "₺", COLORS["blue"]), use_container_width=True)
 
 with tab2:
-    st.plotly_chart(line_chart(rate, "Politika Faizi (1 Haftalık Repo)", "%", "#A8DADC"), use_container_width=True)
+    st.plotly_chart(area_chart(rate, "Politika Faizi (1 Haftalık Repo)", "%", COLORS["purple"]), use_container_width=True)
 
 with tab3:
     c1, c2 = st.columns(2)
     with c1:
-        st.plotly_chart(line_chart(cpi_yillik, "TÜFE Yıllık Değişim", "%", "#F4A261"), use_container_width=True)
+        st.plotly_chart(area_chart(cpi_y, "TÜFE Yıllık Değişim", "%", COLORS["orange"]), use_container_width=True)
     with c2:
-        st.plotly_chart(line_chart(cpi_aylik, "TÜFE Aylık Değişim", "%", "#2A9D8F"), use_container_width=True)
+        st.plotly_chart(bar_chart(cpi_m, "TÜFE Aylık Değişim", "%"), use_container_width=True)
+
+with tab4:
+    st.plotly_chart(area_chart(reserves, "Brüt Döviz Rezervleri", "mn$", COLORS["teal"]), use_container_width=True)
+
+# ── Footer ───────────────────────────────────────────────────────────────────
+st.markdown("---")
+st.markdown(
+    f"<div style='text-align:center; color:{COLORS['muted']}; font-size:12px;'>"
+    "Veri kaynağı: <a href='https://evds3.tcmb.gov.tr' style='color:{COLORS[\"muted\"]}'>TCMB EVDS</a> · "
+    "Veriler saatlik güncellenir · "
+    "Kaynak kodu: <a href='https://github.com/Tuluntas09/tcmb-macro-panel' style='color:{COLORS[\"muted\"]}'>GitHub</a>"
+    "</div>",
+    unsafe_allow_html=True,
+)
