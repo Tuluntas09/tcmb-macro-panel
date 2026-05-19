@@ -33,3 +33,17 @@ def compute_delta(df: pd.DataFrame) -> tuple[float, float]:
 
 def latest_date(df: pd.DataFrame) -> str:
     return df["tarih"].iloc[-1].strftime("%d.%m.%Y")
+
+
+def build_correlation_df(usd, eur, rate, cpi_y, reserves) -> pd.DataFrame:
+    def to_monthly(df, name):
+        return df.set_index("tarih").resample("ME")["deger"].last().rename(name)
+
+    combined = pd.concat([
+        to_monthly(usd,      "USD/TRY"),
+        to_monthly(eur,      "EUR/TRY"),
+        to_monthly(rate,     "Politika Faizi"),
+        to_monthly(cpi_y,    "TÜFE Yıllık"),
+        to_monthly(reserves, "Brüt Rezerv"),
+    ], axis=1).dropna()
+    return combined.corr()

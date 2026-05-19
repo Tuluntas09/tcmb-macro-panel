@@ -1,7 +1,7 @@
 import streamlit as st
 import pandas as pd
-from data_processor import get_series, get_cpi_pct, filter_by_range, compute_delta, latest_date
-from charts import area_chart, bar_chart, COLORS
+from data_processor import get_series, get_cpi_pct, filter_by_range, compute_delta, latest_date, build_correlation_df
+from charts import area_chart, bar_chart, correlation_heatmap, COLORS
 from config import DATE_RANGES
 from ai_analyst import get_ai_analysis
 
@@ -86,27 +86,54 @@ metric_card(c5, "Brüt Rezerv", reserves, "mn$")
 st.markdown("<div style='margin-top:24px'></div>", unsafe_allow_html=True)
 
 # ── Sekmeler ─────────────────────────────────────────────────────────────────
-tab1, tab2, tab3, tab4 = st.tabs(["💱 Döviz Kurları", "📈 Faiz", "🛒 Enflasyon", "🏦 Rezervler"])
+tab1, tab2, tab3, tab4, tab5 = st.tabs(["💱 Döviz Kurları", "📈 Faiz", "🛒 Enflasyon", "🏦 Rezervler", "🔗 Korelasyon"])
+
+
+def _csv_btn(df, filename):
+    csv = df.rename(columns={"tarih": "Tarih", "deger": "Değer"}).to_csv(index=False).encode("utf-8")
+    st.download_button("⬇ CSV İndir", csv, file_name=filename, mime="text/csv", use_container_width=False)
+
 
 with tab1:
     c1, c2 = st.columns(2)
     with c1:
         st.plotly_chart(area_chart(usd, "USD / TRY", "₺", COLORS["red"]), use_container_width=True)
+        _csv_btn(usd, "usd_try.csv")
     with c2:
         st.plotly_chart(area_chart(eur, "EUR / TRY", "₺", COLORS["blue"]), use_container_width=True)
+        _csv_btn(eur, "eur_try.csv")
 
 with tab2:
     st.plotly_chart(area_chart(rate, "Politika Faizi (1 Haftalık Repo)", "%", COLORS["purple"]), use_container_width=True)
+    _csv_btn(rate, "politika_faizi.csv")
 
 with tab3:
     c1, c2 = st.columns(2)
     with c1:
         st.plotly_chart(area_chart(cpi_y, "TÜFE Yıllık Değişim", "%", COLORS["orange"]), use_container_width=True)
+        _csv_btn(cpi_y, "tufe_yillik.csv")
     with c2:
         st.plotly_chart(bar_chart(cpi_m, "TÜFE Aylık Değişim", "%"), use_container_width=True)
+        _csv_btn(cpi_m, "tufe_aylik.csv")
 
 with tab4:
     st.plotly_chart(area_chart(reserves, "Brüt Döviz Rezervleri", "mn$", COLORS["teal"]), use_container_width=True)
+    _csv_btn(reserves, "brut_rezerv.csv")
+
+with tab5:
+    usd_full      = get_series("usd_try")
+    eur_full      = get_series("eur_try")
+    rate_full     = get_series("policy_rate")
+    reserves_full = get_series("gross_reserves")
+    cpi_y_full    = get_cpi_pct(12)
+    corr_df = build_correlation_df(usd_full, eur_full, rate_full, cpi_y_full, reserves_full)
+    st.plotly_chart(correlation_heatmap(corr_df), use_container_width=True)
+    st.markdown(
+        f"<div style='font-size:12px; color:{COLORS['muted']}; margin-top:-8px;'>"
+        "Tüm veri geçmişi kullanılmıştır (Max aralığı). "
+        "Değerler −1 (ters yönlü) ile +1 (aynı yönlü) arasında değişir.</div>",
+        unsafe_allow_html=True,
+    )
 
 # ── AI Makro Analiz ──────────────────────────────────────────────────────────
 st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)

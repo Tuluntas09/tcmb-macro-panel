@@ -87,6 +87,45 @@ def bar_chart(df: pd.DataFrame, title: str, unit: str) -> go.Figure:
     return fig
 
 
+def correlation_heatmap(corr_df) -> go.Figure:
+    labels = list(corr_df.columns)
+    z = corr_df.values.tolist()
+
+    text = [[f"{v:.2f}" for v in row] for row in corr_df.values]
+
+    fig = go.Figure(go.Heatmap(
+        z=z,
+        x=labels,
+        y=labels,
+        text=text,
+        texttemplate="%{text}",
+        textfont=dict(size=13, color=COLORS["text"]),
+        colorscale=[
+            [0.0,  COLORS["red"]],
+            [0.5,  COLORS["bg"]],
+            [1.0,  COLORS["teal"]],
+        ],
+        zmin=-1, zmax=1,
+        showscale=True,
+        colorbar=dict(
+            tickfont=dict(color=COLORS["muted"]),
+            outlinewidth=0,
+        ),
+        hovertemplate="%{y} — %{x}: <b>%{text}</b><extra></extra>",
+    ))
+
+    fig.update_layout(
+        title=dict(text="Makroekonomik Değişkenler Korelasyon Matrisi", font=dict(color=COLORS["text"], size=15)),
+        paper_bgcolor=COLORS["bg"],
+        plot_bgcolor=COLORS["bg"],
+        font=dict(color=COLORS["text"], family="Inter, sans-serif"),
+        xaxis=dict(tickfont=dict(color=COLORS["muted"]), side="bottom"),
+        yaxis=dict(tickfont=dict(color=COLORS["muted"]), autorange="reversed"),
+        margin=dict(l=20, r=20, t=50, b=20),
+    )
+    return fig
+
+
 def _hex_to_rgb(hex_color: str) -> str:
     h = hex_color.lstrip("#")
     r, g, b = int(h[0:2], 16), int(h[2:4], 16), int(h[4:6], 16)
