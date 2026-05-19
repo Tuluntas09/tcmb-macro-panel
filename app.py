@@ -3,6 +3,7 @@ import pandas as pd
 from data_processor import get_series, get_cpi_pct, filter_by_range, compute_delta, latest_date
 from charts import area_chart, bar_chart, COLORS
 from config import DATE_RANGES
+from ai_analyst import get_ai_analysis
 
 st.set_page_config(
     page_title="TCMB Makro Panel",
@@ -106,6 +107,45 @@ with tab3:
 
 with tab4:
     st.plotly_chart(area_chart(reserves, "Brüt Döviz Rezervleri", "mn$", COLORS["teal"]), use_container_width=True)
+
+# ── AI Makro Analiz ──────────────────────────────────────────────────────────
+st.markdown("<div style='margin-top:8px'></div>", unsafe_allow_html=True)
+st.markdown(
+    f"<div style='font-size:14px; font-weight:600; color:{COLORS['text']}; margin-bottom:8px;'>"
+    "🤖 AI Makro Analiz</div>",
+    unsafe_allow_html=True,
+)
+
+usd_val, usd_delta   = compute_delta(usd)
+eur_val, eur_delta   = compute_delta(eur)
+rate_val, rate_delta = compute_delta(rate)
+cpi_y_val, cpi_y_d  = compute_delta(cpi_y)
+cpi_m_val, cpi_m_d  = compute_delta(cpi_m)
+res_val, res_delta   = compute_delta(reserves)
+last_date            = latest_date(usd)
+
+with st.spinner("Claude analiz üretiyor..."):
+    analysis = get_ai_analysis(
+        usd=usd_val, usd_prev=usd_val - usd_delta,
+        eur=eur_val, eur_prev=eur_val - eur_delta,
+        rate=rate_val, rate_prev=rate_val - rate_delta,
+        cpi_y=cpi_y_val, cpi_y_prev=cpi_y_val - cpi_y_d,
+        cpi_m=cpi_m_val, cpi_m_prev=cpi_m_val - cpi_m_d,
+        res=res_val, res_prev=res_val - res_delta,
+        date=last_date,
+    )
+
+st.markdown(
+    f"<div style='background:{COLORS['grid']}; border-radius:12px; padding:20px 22px;"
+    f" border:1px solid #3a3a52; color:{COLORS['text']}; font-size:14px; line-height:1.75;'>"
+    f"{analysis}"
+    f"<div style='margin-top:12px; font-size:10px; color:{COLORS['muted']};'>"
+    f"Kural tabanlı analiz · 6 saatte bir yenilenir · TCMB EVDS verileri</div>"
+    f"</div>",
+    unsafe_allow_html=True,
+)
+
+st.markdown("<div style='margin-top:16px'></div>", unsafe_allow_html=True)
 
 # ── Footer ───────────────────────────────────────────────────────────────────
 st.markdown("---")
