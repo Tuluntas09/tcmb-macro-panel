@@ -33,7 +33,7 @@ html,body,.stApp{
   -webkit-font-smoothing:antialiased;
 }
 .stApp>header{ background:transparent !important; }
-.block-container{ padding:20px 32px 48px !important; max-width:1400px !important; margin:0 auto; }
+.block-container{ padding:3.5rem 32px 48px !important; max-width:1400px !important; margin:0 auto; }
 footer,#MainMenu,[data-testid="stToolbar"],[data-testid="stDecoration"]{
   visibility:hidden !important; display:none !important;
 }
@@ -192,14 +192,18 @@ div[data-testid="stRadio"]>div:last-child>label{
 div[data-testid="stRadio"]>div:last-child>label:has(input:checked){
   background:var(--teal) !important;color:#fff !important;font-weight:600 !important;
 }
-/* Hide radio inputs and ALL circle indicators — multiple selectors for Streamlit compatibility */
+/* Hide radio inputs and ALL circle indicators */
 div[data-testid="stRadio"] input[type="radio"]{ display:none !important; }
 div[data-testid="stRadio"] > label{ display:none !important; }
 div[data-testid="stRadio"] [data-baseweb="radio"]{ display:none !important; }
 div[data-testid="stRadio"] svg{ display:none !important; }
-div[data-testid="stRadio"] label > div > div:first-child{ display:none !important; width:0 !important; }
+/* Nuclear: hide everything except the last child (text) in each option's wrapper div */
 div[data-testid="stRadio"] label > div{ gap:0 !important; }
-div[data-testid="stRadio"]>div:last-child>label p{
+div[data-testid="stRadio"] label > div > *:not(:last-child){
+  display:none !important; width:0 !important; height:0 !important;
+  min-width:0 !important; min-height:0 !important; overflow:hidden !important;
+}
+div[data-testid="stRadio"] label p{
   margin:0 !important;line-height:1 !important;font-size:12px !important;
   font-family:'JetBrains Mono',monospace !important;letter-spacing:.2px !important;
 }
