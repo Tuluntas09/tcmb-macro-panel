@@ -1,98 +1,150 @@
-# TCMB Makro Göstergeler Paneli
+<div align="center">
 
-> Türkiye Cumhuriyet Merkez Bankası · EVDS API · Gerçek zamanlı makroekonomik izleme paneli
+# 📊 TCMB Makro Göstergeler Paneli
 
-🔗 **Canlı:** [tcmb-macro-panel.streamlit.app](https://tcmb-macro-panel-vctrkyq2bfjkqejgxjaudp.streamlit.app)
+**Real-time macroeconomic dashboard for Turkey — powered by TCMB EVDS API**
 
----
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Streamlit-FF4B4B?style=for-the-badge&logo=streamlit&logoColor=white)](https://tcmb-macro-panel-vctrkyq2bfjkqejgxjaudp.streamlit.app)
+[![Python](https://img.shields.io/badge/Python-3.11+-3776AB?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![Plotly](https://img.shields.io/badge/Plotly-Interactive%20Charts-3F4F75?style=for-the-badge&logo=plotly&logoColor=white)](https://plotly.com)
+[![TCMB EVDS](https://img.shields.io/badge/Data-TCMB%20EVDS-1B2536?style=for-the-badge)](https://evds3.tcmb.gov.tr)
 
-## Özellikler
-
-| # | Özellik |
-|---|---------|
-| 📈 | **5 canlı gösterge** — USD/TRY, EUR/TRY, Politika Faizi, TÜFE (yıllık + aylık), Brüt Döviz Rezervi |
-| 🃏 | **Metrik kartlar** — anlık değer, önceki döneme delta (▲/▼), mini sparkline grafik |
-| 🗂️ | **5 interaktif sekme** — Döviz, Faiz (adımsal), Enflasyon, Rezervler, Korelasyon matrisi |
-| 🔗 | **Pearson korelasyon matrisi** — tüm seriler arası ilişki ısı haritası |
-| 📅 | **Dönem filtresi** — 1A / 3A / 6A / 1Y / Max |
-| ⬇️ | **CSV export** — her serinin verisini tek tıkla indir |
-| 🧠 | **Otomatik makro analiz** — kural tabanlı Türkçe piyasa değerlendirmesi |
-| 📊 | **İstatistik paneli** — 52-hafta aralık, yıllık değişim, reel faiz, zirveden düşüş |
+</div>
 
 ---
 
-## Ekran Görüntüsü
+## Overview
 
-> Cobalt-blue / açık tema · JetBrains Mono rakamlar · Bloomberg tarzı düzen
+A Bloomberg-style financial dashboard that fetches live macroeconomic data from the **Central Bank of Turkey (TCMB) EVDS API** and visualizes 5 key indicators in real time. Built as a portfolio project targeting fintech and investment roles.
 
----
-
-## Veri Kaynakları
-
-| Gösterge | EVDS Seri Kodu | Frekans |
-|----------|---------------|---------|
-| USD/TRY | `TP.DK.USD.A` | Günlük |
-| EUR/TRY | `TP.DK.EUR.A` | Günlük |
-| Politika Faizi | `TP.APIFON4` | Aylık |
-| TÜFE Endeksi | `TP.FG.J0` | Aylık |
-| Brüt Döviz Rezervi | `TP.AB.B1` | Haftalık |
-
-Tüm veriler [TCMB EVDS](https://evds3.tcmb.gov.tr) üzerinden ücretsiz olarak erişilebilir.
+**Live:** https://tcmb-macro-panel-vctrkyq2bfjkqejgxjaudp.streamlit.app
 
 ---
 
-## Teknoloji Stack
+## Features
 
-| Katman | Teknoloji |
-|--------|-----------|
-| Veri çekme | `tcmb` Python paketi + EVDS REST API |
-| Veri işleme | `pandas` (resample, pct_change, corr) |
-| Görselleştirme | `plotly` (area, bar, heatmap) |
-| Arayüz | `streamlit` (custom CSS, unsafe_allow_html) |
-| Deploy | Streamlit Cloud (GitHub push-to-deploy) |
-| Font | Inter + JetBrains Mono (Google Fonts) |
+| Feature | Description |
+|---------|-------------|
+| 📈 **5 Live Indicators** | USD/TRY, EUR/TRY, Policy Rate, CPI (YoY + MoM), Gross FX Reserves |
+| 🃏 **Metric Cards** | Current value · delta vs previous period · mini sparkline chart |
+| 🗂️ **5 Interactive Tabs** | FX, Policy Rate (step), Inflation, Reserves, Correlation Matrix |
+| 🔗 **Correlation Heatmap** | Pearson correlation across all series via Plotly heatmap |
+| 📅 **Time Range Selector** | 1M / 3M / 6M / 1Y / Max (dynamic cutoff dates) |
+| ⬇️ **CSV Export** | One-click download for every data series |
+| 🧠 **Auto Macro Analysis** | Rule-based Turkish commentary: FX · inflation · rate · reserves |
+| 📊 **Stats Panel** | 52-week range · YoY change · real rate · CPI drop from peak |
+| ⚡ **Caching** | `@st.cache_data(ttl=3600)` — hourly refresh, no redundant API calls |
 
 ---
 
-## Mimari
+## Tech Stack
+
+| Layer | Technology |
+|-------|-----------|
+| **Data** | `tcmb` Python package · TCMB EVDS REST API |
+| **Processing** | `pandas` — resample, pct_change, Pearson corr |
+| **Charts** | `plotly` — Scatter (area/step), Bar, Heatmap |
+| **UI** | `streamlit` — custom CSS, `unsafe_allow_html` |
+| **Fonts** | Inter · JetBrains Mono (Google Fonts) |
+| **Deploy** | Streamlit Cloud (GitHub push-to-deploy) |
+
+---
+
+## Data Sources
+
+| Indicator | EVDS Series Code | Frequency |
+|-----------|-----------------|-----------|
+| USD/TRY | `TP.DK.USD.A` | Daily |
+| EUR/TRY | `TP.DK.EUR.A` | Daily |
+| Policy Rate | `TP.APIFON4` | Monthly |
+| CPI Index | `TP.FG.J0` | Monthly |
+| Gross FX Reserves | `TP.AB.B1` | Weekly |
+
+All data freely available at [evds3.tcmb.gov.tr](https://evds3.tcmb.gov.tr).
+
+---
+
+## Architecture
 
 ```
 TCMB EVDS API
-      ↓
-data_fetcher.py    — API bağlantısı, ham seri çekme
-      ↓
-data_processor.py  — Temizleme, yüzde hesabı, delta, korelasyon
-      ↓
-charts.py          — Plotly grafik fonksiyonları (area, dual, bar, heatmap)
-      ↓
-ai_analyst.py      — Kural tabanlı Türkçe makro yorum üretici
-      ↓
-app.py             — Streamlit UI (CSS, metrik kartlar, sekmeler, istatistik paneli)
+      │
+      ▼
+data_fetcher.py     ← API client, raw series fetch, error handling
+      │
+      ▼
+data_processor.py   ← Cleaning · pct_change · delta · correlation matrix
+      │
+      ├──▶ charts.py        ← Plotly figure factories (area, dual, bar, heatmap)
+      │
+      └──▶ ai_analyst.py    ← Rule-based Turkish macro commentary (HTML output)
+                │
+                ▼
+            app.py          ← Streamlit UI · CSS · metric cards · tabs · stats panel
 ```
 
 ---
 
-## Kurulum
+## Local Setup
 
 ```bash
+# 1. Clone
 git clone https://github.com/Tuluntas09/tcmb-macro-panel.git
 cd tcmb-macro-panel
+
+# 2. Create virtual environment
 python -m venv venv
 venv\Scripts\activate        # Windows
+# source venv/bin/activate   # macOS / Linux
+
+# 3. Install dependencies
 pip install -r requirements.txt
-```
 
-`.env` dosyası oluştur:
-```
-EVDS_API_KEY=senin_evds_anahtarin
-```
+# 4. Configure API key
+# Create a .env file:
+echo EVDS_API_KEY=your_api_key_here > .env
 
-```bash
+# 5. Run
 streamlit run app.py
 ```
 
-EVDS API anahtarı için [evds3.tcmb.gov.tr](https://evds3.tcmb.gov.tr) adresinden ücretsiz kayıt yapılabilir.
+> Get a free EVDS API key at [evds3.tcmb.gov.tr](https://evds3.tcmb.gov.tr)
 
 ---
 
-*Geliştirici: [Tuluntas09](https://github.com/Tuluntas09) · Eğitim amaçlıdır, yatırım tavsiyesi değildir.*
+## Project Structure
+
+```
+tcmb-macro-panel/
+├── app.py              # Main Streamlit application
+├── charts.py           # Plotly chart factory functions
+├── data_fetcher.py     # TCMB EVDS API client
+├── data_processor.py   # Data transformation & statistics
+├── ai_analyst.py       # Rule-based macro analysis generator
+├── config.py           # Series codes & date range config
+├── requirements.txt    # Python dependencies
+├── .env                # API keys (not committed)
+└── .streamlit/
+    └── config.toml     # Streamlit light theme config
+```
+
+---
+
+## Key Technical Decisions
+
+- **Rule-based analysis over LLM** — avoids API costs, works offline, deterministic output
+- **`@st.cache_data(ttl=3600)`** — 1-hour cache prevents redundant EVDS requests
+- **Custom CSS over Streamlit themes** — pixel-accurate Bloomberg-style light theme
+- **Dual-series area chart** — USD/TRY and EUR/TRY on same canvas for direct comparison
+- **Step-shape policy rate** — `line.shape='hv'` accurately represents discrete rate decisions
+- **Dynamic date ranges** — cutoffs computed at runtime so "1M ago" is always correct
+
+---
+
+<div align="center">
+
+*Built for fintech/investment portfolio · Data: TCMB EVDS · Not financial advice*
+
+**[Tuluntas09](https://github.com/Tuluntas09)**
+
+</div>
