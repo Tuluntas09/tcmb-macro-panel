@@ -1,12 +1,6 @@
 import streamlit as st
 
 
-def _trend(delta: float, pct: bool = False) -> str:
-    if pct:
-        return "yükseldi" if delta > 0 else "geriledi"
-    return "değer kaybetti" if delta > 0 else "değer kazandı"
-
-
 @st.cache_data(ttl=21600, show_spinner=False)
 def get_ai_analysis(
     usd: float, usd_prev: float,
@@ -17,79 +11,98 @@ def get_ai_analysis(
     res: float, res_prev: float,
     date: str,
 ) -> str:
+    """Kural tabanlı Türkçe makro analiz — HTML paragraf döner."""
     usd_d  = usd - usd_prev
     eur_d  = eur - eur_prev
     cpi_d  = cpi_y - cpi_y_prev
     res_d  = res - res_prev
     rate_d = rate - rate_prev
 
-    # Döviz yorumu
+    # ── Döviz paragrafı ──────────────────────────────────────────────
     if abs(usd_d) < 0.05:
-        fx_comment = f"Döviz cephesinde USD/TRY kuru {usd:.2f} ₺ ile yatay seyrediyor."
+        fx = (
+            f"<strong>USD/TRY {usd:.4f} ₺</strong> ile yatay seyrediyor. "
+            f"EUR/TRY {eur:.4f} ₺ seviyesinde; çapraz kur görece istikrarlı "
+            f"seyrini korumaktadır."
+        )
     elif usd_d > 0:
-        fx_comment = (
-            f"Türk lirası dolar karşısında {_trend(usd_d)} ve USD/TRY {usd:.2f} ₺ "
-            f"seviyesine ulaştı; kur baskısı sürmektedir."
+        fx = (
+            f"Türk lirası değer kaybetti; <strong>USD/TRY {usd:.4f} ₺</strong> "
+            f"seviyesine yükseldi (<strong>+{abs(usd_d):.4f} ₺</strong>). "
+            f"EUR/TRY {eur:.4f} ₺ ile paralel bir seyir izledi; kur baskısı "
+            f"döviz sepetine yansımaktadır."
         )
     else:
-        fx_comment = (
-            f"Türk lirası dolar karşısında güç kazandı; USD/TRY {usd:.2f} ₺'ye "
-            f"geriledi."
+        fx = (
+            f"Türk lirası güç kazandı; <strong>USD/TRY {usd:.4f} ₺</strong>'ye "
+            f"geriledi (<strong>{usd_d:.4f} ₺</strong>). "
+            f"EUR/TRY {eur:.4f} ₺ ile liranın değerlenme eğilimini teyit etmektedir."
         )
 
-    # Enflasyon yorumu
+    # ── Enflasyon + faiz paragrafı ────────────────────────────────────
     if cpi_y > 50:
-        inf_str = "yüksek seyreden"
+        inf_level = "yüksek seyreden"
     elif cpi_y > 20:
-        inf_str = "çift haneli"
+        inf_level = "çift haneli"
     else:
-        inf_str = "tek haneli"
+        inf_level = "tek haneli"
 
     if cpi_d > 0:
-        inf_comment = (
-            f"Yıllık enflasyon %{cpi_y:.1f} ile {inf_str} düzeyde olup "
-            f"bir önceki döneme göre {abs(cpi_d):.1f} puan yükseldi."
-        )
+        inf_move = f"bir önceki döneme göre <strong>{abs(cpi_d):.1f} puan yükseldi</strong>"
     elif cpi_d < 0:
-        inf_comment = (
-            f"Yıllık enflasyon %{cpi_y:.1f} ile {inf_str} düzeyde, "
-            f"bir önceki döneme kıyasla {abs(cpi_d):.1f} puanlık gerileme kaydetti."
-        )
+        inf_move = f"bir önceki döneme kıyasla <strong>{abs(cpi_d):.1f} puan geriledi</strong>; dezenflasyon patikası sürmektedir"
     else:
-        inf_comment = (
-            f"Yıllık enflasyon %{cpi_y:.1f} ile {inf_str} düzeyde yatay seyrediyor."
-        )
+        inf_move = "yatay seyrediyor"
 
-    # Faiz yorumu
     if rate_d > 0:
-        rate_comment = (
-            f"TCMB politika faizini {abs(rate_d):.0f} baz puan artırarak "
-            f"%{rate:.0f}'e yükseltti; sıkılaştırıcı para politikası devam etmektedir."
+        rate_move = (
+            f"TCMB politika faizini <strong>{abs(rate_d):.0f} baz puan artırarak "
+            f"%{rate:.0f}</strong>'e yükseltti; sıkılaştırıcı para politikası devam etmektedir."
         )
     elif rate_d < 0:
-        rate_comment = (
-            f"TCMB politika faizini {abs(rate_d):.0f} baz puan indirerek "
-            f"%{rate:.0f}'e çekti; para politikasında gevşeme süreci başladı."
+        rate_move = (
+            f"TCMB politika faizini <strong>{abs(rate_d):.0f} baz puan indirerek "
+            f"%{rate:.0f}</strong>'e çekti; para politikasında temkinli gevşeme süreci başladı."
         )
     else:
-        rate_comment = (
-            f"TCMB politika faizi %{rate:.0f} seviyesinde sabit tutulmaktadır."
+        rate_move = (
+            f"TCMB politika faizi <strong>%{rate:.0f}</strong> seviyesinde sabit tutulmaktadır."
         )
 
-    # Rezerv yorumu
+    inf_rate = (
+        f"Yıllık <strong>TÜFE %{cpi_y:.1f}</strong> ile {inf_level} düzeyde, "
+        f"{inf_move}. "
+        f"{rate_move}"
+    )
+
+    # ── Rezerv + genel görünüm paragrafı ─────────────────────────────
+    res_bn = res / 1000
     if res_d > 0:
-        res_comment = (
-            f"Brüt döviz rezervleri {res/1000:.1f} milyar dolar ile "
-            f"önceki döneme göre artış kaydetti; rezerv birikimi güçleniyor."
+        res_move = (
+            f"<strong>Brüt döviz rezervleri {res_bn:.1f} milyar dolar</strong> "
+            f"ile artış kaydetti; rezerv birikimi dış tampon kapasiteyi güçlendiriyor."
         )
     elif res_d < 0:
-        res_comment = (
-            f"Brüt döviz rezervleri {res/1000:.1f} milyar dolara geriledi; "
-            f"dış tampon kapasite izlenmesi gereken bir başlık olmaya devam etmektedir."
+        res_move = (
+            f"<strong>Brüt döviz rezervleri {res_bn:.1f} milyar dolara</strong> geriledi; "
+            f"dış tampon kapasite yakından izlenmesi gereken bir başlık olmaya devam etmektedir."
         )
     else:
-        res_comment = (
-            f"Brüt döviz rezervleri {res/1000:.1f} milyar dolar seviyesinde yatay seyrediyor."
+        res_move = (
+            f"<strong>Brüt döviz rezervleri {res_bn:.1f} milyar dolar</strong> "
+            f"seviyesinde yatay seyrediyor."
         )
 
-    return f"{fx_comment} {inf_comment} {rate_comment} {res_comment}"
+    # Özet değerlendirme
+    if cpi_d < 0 and res_d >= 0:
+        outlook = "Genel görünüm <strong>temkinli pozitif</strong>: dezenflasyon + rezerv birikimi olumlu olmakla birlikte küresel risk iştahı ve enerji fiyatları başlıca yukarı yönlü kur riski olmayı sürdürüyor."
+    elif usd_d > 0.5 or cpi_d > 1:
+        outlook = "Genel görünüm <strong>temkinli negatif</strong>: kur baskısı ve/veya enflasyondaki yükseliş para politikasında ek sıkılaştırma gerektiren baskıları canlı tutmaktadır."
+    else:
+        outlook = "Genel görünüm <strong>nötr</strong>: temel göstergeler sınırlı hareketle izleme modunda; veri akışı yakından takip edilmektedir."
+
+    return (
+        f"<p>{fx}</p>"
+        f"<p>{inf_rate}</p>"
+        f"<p>{res_move} {outlook}</p>"
+    )

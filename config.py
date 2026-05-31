@@ -1,3 +1,5 @@
+from datetime import datetime, timedelta
+
 SERIES = {
     "usd_try": {
         "code": "TP.DK.USD.A",
@@ -26,14 +28,17 @@ SERIES = {
     "gross_reserves": {
         "code": "TP.AB.B1",
         "name": "Brüt Döviz Rezervi",
-        "unit": "milyar $",
+        "unit": "mn$",
         "frequency": "weekly",
     },
 }
 
+_today = datetime.today()
 DATE_RANGES = {
-    "1Y": "01-01-2025",
-    "3Y": "01-01-2023",
+    "1A":  (_today - timedelta(days=30)).strftime("%d-%m-%Y"),
+    "3A":  (_today - timedelta(days=90)).strftime("%d-%m-%Y"),
+    "6A":  (_today - timedelta(days=180)).strftime("%d-%m-%Y"),
+    "1Y":  (_today - timedelta(days=365)).strftime("%d-%m-%Y"),
     "Max": "01-01-2003",
 }
 
