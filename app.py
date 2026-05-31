@@ -192,9 +192,13 @@ div[data-testid="stRadio"]>div:last-child>label{
 div[data-testid="stRadio"]>div:last-child>label:has(input:checked){
   background:var(--teal) !important;color:#fff !important;font-weight:600 !important;
 }
-div[data-testid="stRadio"] input[type="radio"]{display:none !important;}
-div[data-testid="stRadio"]>label{display:none !important;}
-div[data-testid="stRadio"]>div:last-child>label>div>div:first-child{display:none !important;}
+/* Hide radio inputs and ALL circle indicators — multiple selectors for Streamlit compatibility */
+div[data-testid="stRadio"] input[type="radio"]{ display:none !important; }
+div[data-testid="stRadio"] > label{ display:none !important; }
+div[data-testid="stRadio"] [data-baseweb="radio"]{ display:none !important; }
+div[data-testid="stRadio"] svg{ display:none !important; }
+div[data-testid="stRadio"] label > div > div:first-child{ display:none !important; width:0 !important; }
+div[data-testid="stRadio"] label > div{ gap:0 !important; }
 div[data-testid="stRadio"]>div:last-child>label p{
   margin:0 !important;line-height:1 !important;font-size:12px !important;
   font-family:'JetBrains Mono',monospace !important;letter-spacing:.2px !important;
